@@ -22,25 +22,62 @@ const styles = {
   },
 };
 
-function CustomNavbar(props) {
-  const { classes } = props;
-  return (
+
+class CustomNavbar extends React.Component {
+
+  constructor(props) {
+    super(props);
+    var loggedIn = false;
+
+    if(localStorage.getItem('email')){
+      loggedIn = true;
+    } 
+
+    this.state = {
+      loggedIn: loggedIn,
+    }
+  }
+
+
+  logout() {
+    localStorage.removeItem('email');
+    localStorage.removeItem('user_hash');
+    this.setState = {
+      loggedIn  : false
+    }
+  }
+
+  
+
+  render() {
+
+    const { classes } = this.props;
+
+    return (
+
+ 
     <div className={classes.root}>
+
       <AppBar position="static">
         <Toolbar>
           <IconButton className={classes.menuButton} color="inherit" aria-label="Menu">
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" color="inherit" className={classes.grow}>
-            BitMex
+            <Link className="link_color" to='/'>BitMex</Link>
           </Typography>
           <Button color="inherit"><Link className="link_color" to='/'>Home</Link></Button>
           <Button color="inherit"><Link className="link_color" to='/about'>About</Link></Button>
-          <Button color="inherit"><Link className="link_color" to='/login'>Login</Link></Button>
+          {this.state.loggedIn ? <Button color="inherit"><Link className="link_color" to='/register'>Register</Link></Button> : "" }
+          {this.state.loggedIn ? <Button color="inherit"><Link className="link_color" to='/' onClick = {this.logout}>Logout</Link></Button>
+          : <Button color="inherit"><Link className="link_color" to='/login'>Login</Link></Button>}
         </Toolbar>
       </AppBar>
     </div>
-  );
+
+      );
+  }
 }
+
 
 export default withStyles(styles)(CustomNavbar);

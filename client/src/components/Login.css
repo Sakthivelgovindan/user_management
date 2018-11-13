@@ -26,3 +26,12 @@
 }
 
 
+.signup_btn button:focus {
+  outline: 0px auto -webkit-focus-ring-color;
+
+}
+
+.login_btn button:focus {
+  outline: 0px auto -webkit-focus-ring-color;
+
+}

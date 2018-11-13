@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const mysql = require('mysql');
 const moment = require('moment');
+const md5 = require('md5');
 
 const app = express();
 
@@ -26,89 +27,93 @@ connection.connect(function(error){
   }
 })
 
-app.get('/', (req, res) => {
+
+app.post('/googleAuth',(req, res) => {
+ 
+    let email = req.body.email;
+    let hash = md5(email);
   
-  connection.query("SELECT  * FROM user_details",function(error,rows,fields){
-    if(!!error){
-      console.log('Successfully executed.');
-      console.log(rows);
-    }
-    else{
-      console.log("Error in query",error);
-    }
+    let sql = "SELECT * FROM user_details WHERE email_id = ? LIMIT 1";
 
-  })
-  res.send('Hello World');
-
-});
-
-app.post('/login', (req, res) => {
-
-    var username = req.body.name;
-    var email = req.body.email;
-    var status   = "active";
-
-    var sql = "SELECT  * FROM user_details WHERE email_id = ? and user_hash = ? and status = ?";
-
-    connection.query(sql,[ username, email, status],function(error,rows,fields){
-      if(!error){
-        console.log(rows);
-        console.log('Successfully executed.');
-        res.send(rows);
+    connection.query(sql, [email], function(error, results){
+      // There was an issue with the query
+      if(error){
+        callback(error);
+        return;
       }
-      else{
-        console.log("Error in query",error);
+     
+      if(results.length){
+        // The username already exists
+        console.log(results);
+        res.send({'status':200,'user_hash':hash,'email':email});
+      }else{
+        // The username wasn't found in the database
+          let username = req.body.username;
+          let timestamp = moment().unix();
+          let status = "active";
+          let sql = "INSERT INTO user_details (user_hash, email_id , user_name , timestamp ,status) VALUES (?, ? , ? , ? , ?)";
+
+          connection.query(sql,[hash,email,username,timestamp,status],function(error,results){
+            if(error){
+              callback(error);
+              return;
+            }
+            else{
+              console.log(results);
+              res.send({'status':200,'user_hash':hash,'email':email});
+            }
+          })
       }
-      
     });
 
+
 });
 
-app.post('/register', (req , res) =>{
-  console.log("comes");
 
-  var username   = req.body.username;
-  var email      = req.body.email;
-  var password   = req.body.password;
-  var api_key    = req.body.api_key;
-  var secret_key = req.body.secret_key;
-  var status     = "active";
-  var timestamp  = moment().unix();
+app.post('/register',(req,res) => {
 
-  console.log(req.body);
-  
-  var sql = "SELECT MAX(sno) FROM user_details ";
+  let username   = req.body.username;
+  let email      = req.body.email;
+  let password   = req.body.password;
+  let api_key    = req.body.api_key;
+  let secret_key = req.body.secret_key;
+  let timestamp  = moment().unix();
+  let status     = 'active';
 
-  connection.query(sql,function(error,rows){
-    if(!error){
-      console.log('Successfully executed.');
-      res.send(rows);
-      console.log(rows[0]);
-      console.log(rows[0].MAX(sno));
+  let sql = "SELECT MAX(sno) as sno from api_details";
 
-      //  var sql = "INSERT INTO `form`(`user_id`,`api_key`, `secret_key`,`status`,`timestamp`) VALUES (?,?,?,?,?)";
-
-      //     connection.query(sql,[ rows[0], api_key, secret_key, status],function(error,rows,fields){
-      //       if(!error){
-      //         console.log('Successfully executed.');
-      //         res.send(rows);
-      //       }
-      //       else{
-      //         console.log("Error in query",error);
-      //       }
-            
-      //     });
-
+  connection.query(sql,function(error, result){
+    if(error){
+      callback(error);
+      return;
     }
     else{
-      console.log("Error in query",error);
+      let user_id = 'user_'+result[0].sno;
+
+      console.log(user_id);
+      console.log(timestamp);
+      console.log(status);
+
+      let sql = "INSERT into api_details (user_id,api_key,secret_key,status,timestamp) VALUES (? , ? , ? , ? , ?)";
+      console.log(sql);
+      
+      connection.query(sql,[user_id,api_key,secret_key,status,timestamp],function(error,result){
+        if(error){
+          callback(error);
+          return;
+        }
+        else{
+          console.log(result);
+          res.send({'status':'inserted'});
+        }
+      });
     }
-  });
-    
+  })
 
- 
+})
 
-});
+
+  
 
 const port = 5000;
 

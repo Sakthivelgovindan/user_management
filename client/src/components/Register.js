@@ -1,7 +1,10 @@
 import React from 'react';
 import * as rs from 'reactstrap';
 import { Button, Form, FormGroup, Label, Input } from 'reactstrap';
+import createHistory from 'history/createBrowserHistory';
 import "./Register.css";
+
+const history = createHistory({ forceRefresh: true });
 
 class Register extends React.Component {
 
@@ -26,7 +29,7 @@ class Register extends React.Component {
     onSubmit = (e) => {
         e.preventDefault();
 
-        let form = {
+        let data = {
             username: this.state.username,
             email: this.state.email,
             password: this.state.password,
@@ -40,13 +43,15 @@ class Register extends React.Component {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(form)
-        })
+            body: JSON.stringify(data)
+                    })
             .then(res => {
                 return res.json();
             })
             .then(data => {
-                
+                if(data.status === "inserted"){
+                    history.push('/');
+                }
             })
             .catch(err => {
                 console.log(err);
